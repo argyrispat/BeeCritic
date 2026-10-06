@@ -23,6 +23,7 @@ export function SignInPage() {
     register,
     handleSubmit,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -31,11 +32,39 @@ export function SignInPage() {
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-16">
       <h1 className="font-display text-4xl">Sign in</h1>
-      <p className="mt-2 text-sm text-muted">
-        Demo environment — publicly shared credentials for evaluation only:{' '}
-        <span className="text-text">demo@beecritic.com</span> /{' '}
-        <span className="text-text">Demo1234!</span>
-      </p>
+      <p className="mt-2 text-sm text-muted">Welcome back to BeeCritic.</p>
+
+      <aside
+        className="mt-6 rounded-sm border border-border bg-surface-2/60 px-4 py-3"
+        aria-label="Demo credentials"
+      >
+        <p className="text-xs font-medium uppercase tracking-wide text-muted">
+          Demo credentials
+        </p>
+        <p className="mt-1 text-sm text-muted">
+          Publicly shared for evaluation — use these to explore the app.
+        </p>
+        <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-muted">Email</dt>
+            <dd className="font-mono text-text">demo@beecritic.com</dd>
+          </div>
+          <div>
+            <dt className="text-muted">Password</dt>
+            <dd className="font-mono text-text">Demo1234!</dd>
+          </div>
+        </dl>
+        <button
+          type="button"
+          className="mt-3 text-sm text-accent hover:underline"
+          onClick={() => {
+            setValue('email', 'demo@beecritic.com', { shouldValidate: true })
+            setValue('password', 'Demo1234!', { shouldValidate: true })
+          }}
+        >
+          Fill form
+        </button>
+      </aside>
 
       <form
         className="mt-8 space-y-5"
