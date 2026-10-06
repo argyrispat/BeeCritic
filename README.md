@@ -111,21 +111,3 @@ BeeCritic is a **portfolio/demo application**. It is not intended for production
 - **Cookie notice:** the app uses necessary `localStorage` for auth/theme/consent; analytics and advertising cookies are **not** used
 
 Legal pages are demonstration templates and have **not** been reviewed by a lawyer.
-
-> Before using this software commercially, the privacy policy, terms, cookie implementation, data retention practices, security configuration, and GDPR obligations should be reviewed and adapted by qualified legal/privacy professionals.
-
-### Security headers
-
-| Header | Where | Notes |
-|--------|--------|--------|
-| `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` | API + Vite | Always applied |
-| `Content-Security-Policy` | API + Vite | Dev Vite CSP allows HMR + Google Fonts + TMDB images; production API uses a tight policy for JSON |
-| `Strict-Transport-Security` / HTTPS redirection | API | Enabled outside Development; HSTS header is added only when the request is HTTPS |
-
-When hosting the SPA in production, configure the same (or stricter) headers on your static host or reverse proxy. Local development uses HTTP, so HSTS does not apply until TLS is terminated in front of the API.
-
-### Secrets
-
-- Never commit `.env` files, real API keys, or production JWT signing keys
-- Committed `appsettings.json` values (JWT key, local Postgres password) are **development defaults only** — override them for any shared or public deployment
-- Provide `Tmdb:ApiKey` via environment variables or user secrets
