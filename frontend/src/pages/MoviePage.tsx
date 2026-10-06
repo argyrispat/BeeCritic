@@ -29,8 +29,9 @@ export function MoviePage() {
 
   const movie = useQuery({
     queryKey: ['tmdb', 'movie', movieId],
-    enabled: Number.isFinite(movieId),
+    enabled: Number.isFinite(movieId) && movieId > 0,
     queryFn: () => tmdbApi.movie(movieId),
+    retry: 1,
   })
 
   const stats = useQuery({
@@ -88,7 +89,7 @@ export function MoviePage() {
     ])
   }
 
-  if (!Number.isFinite(movieId)) {
+  if (!Number.isFinite(movieId) || movieId <= 0) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-16">
         <ErrorState title="Invalid movie" />
@@ -96,14 +97,20 @@ export function MoviePage() {
     )
   }
 
-  if (movie.isLoading) return <PageLoader />
+  if (movie.isLoading || movie.isPending) return <PageLoader />
 
   if (movie.isError || !movie.data) {
+    const apiError = movie.error instanceof ApiError ? movie.error : null
+    const isMissing = apiError?.status === 404
     return (
       <div className="mx-auto max-w-7xl px-4 py-16">
         <ErrorState
-          title="Movie not found"
-          message={movie.error instanceof ApiError ? movie.error.message : undefined}
+          title={isMissing ? 'Movie not found' : 'Couldn’t load this movie'}
+          message={
+            apiError?.message ??
+            'Something went wrong while loading movie details.'
+          }
+          onRetry={() => movie.refetch()}
         />
       </div>
     )
@@ -114,6 +121,7 @@ export function MoviePage() {
   const runtime = formatRuntime(m.runtime)
   const director = m.credits?.crew.find((c) => c.job === 'Director')
   const cast = m.credits?.cast.slice(0, 8) ?? []
+  const genreLabel = m.genres?.map((g) => g.name).join(', ')
   const hasMyReview = Boolean(myReview.data)
   const myReviewMissing =
     myReview.isError && myReview.error instanceof ApiError && myReview.error.status === 404
@@ -133,7 +141,7 @@ export function MoviePage() {
           <div className="max-w-3xl">
             <h1 className="font-display text-4xl tracking-tight sm:text-6xl">{m.title}</h1>
             <p className="mt-4 text-sm text-muted sm:text-base">
-              {[year, m.genres.map((g) => g.name).join(', '), runtime].filter(Boolean).join(' · ')}
+              {[year, genreLabel, runtime].filter(Boolean).join(' · ')}
             </p>
             <div className="mt-4 flex flex-wrap gap-4 text-sm">
               {stats.data?.averageRating != null && (

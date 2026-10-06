@@ -22,6 +22,10 @@ services:
       VITE_API_PROXY_TARGET: http://host.docker.internal:5080
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.ts:/app/vite.config.ts
 
 volumes:
   beecritic_pgdata:
