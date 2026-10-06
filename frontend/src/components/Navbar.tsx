@@ -15,11 +15,19 @@ export function Navbar() {
   const navigate = useNavigate()
 
   const close = () => setOpen(false)
+  const goTop = () => {
+    close()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-bg/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
-        <Link to="/" className="shrink-0 font-display text-2xl tracking-tight text-text" onClick={close}>
+        <Link
+          to="/"
+          className="shrink-0 font-display text-2xl tracking-tight text-text"
+          onClick={goTop}
+        >
           Bee<span className="text-accent">Critic</span>
         </Link>
 
@@ -28,13 +36,13 @@ export function Navbar() {
         </div>
 
         <nav className="hidden items-center gap-5 md:flex">
-          <NavLink to="/movies" className={linkClass}>
+          <NavLink to="/movies" className={linkClass} onClick={goTop}>
             Movies
           </NavLink>
-          <NavLink to="/discover" className={linkClass}>
+          <NavLink to="/discover" className={linkClass} onClick={goTop}>
             Discover
           </NavLink>
-          <NavLink to="/search" className={linkClass}>
+          <NavLink to="/search" className={linkClass} onClick={goTop}>
             Advanced Search
           </NavLink>
         </nav>
@@ -110,13 +118,13 @@ export function Navbar() {
       {open && (
         <div className="border-t border-border bg-bg px-4 py-4 md:hidden">
           <nav className="flex flex-col gap-4">
-            <NavLink to="/movies" className={linkClass} onClick={close}>
+            <NavLink to="/movies" className={linkClass} onClick={goTop}>
               Movies
             </NavLink>
-            <NavLink to="/discover" className={linkClass} onClick={close}>
+            <NavLink to="/discover" className={linkClass} onClick={goTop}>
               Discover
             </NavLink>
-            <NavLink to="/search" className={linkClass} onClick={close}>
+            <NavLink to="/search" className={linkClass} onClick={goTop}>
               Advanced Search
             </NavLink>
             {isAuthenticated && user ? (
