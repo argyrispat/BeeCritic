@@ -3,5 +3,8 @@ obj/
 **/.vs/
 **/.idea/
 **/out/
+_uri_test/
+_*/
 *.user
 *.md
+*.csx
