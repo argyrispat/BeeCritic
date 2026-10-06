@@ -15,12 +15,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 builder.Services.Configure<TmdbSettings>(builder.Configuration.GetSection(TmdbSettings.SectionName));
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is missing.");
+// Prefer ASP.NET connection string; fall back to Render's linked-database DATABASE_URL.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+    connectionString = builder.Configuration["DATABASE_URL"];
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Database connection string is missing. Set ConnectionStrings__DefaultConnection " +
+        "or DATABASE_URL (Render → Environment → Add from Database).");
+}
+
+connectionString = NormalizePostgresConnectionString(connectionString);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
-
 builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<ITmdbService, TmdbService>(client =>
 {
@@ -147,4 +157,51 @@ using (var scope = app.Services.CreateScope())
 
 app.Run();
 
-public partial class Program;
+public partial class Program
+{
+    /// <summary>
+    /// Accepts Render Internal Database URLs (postgres:// / postgresql://) or classic Npgsql key=value strings.
+    /// </summary>
+    private static string NormalizePostgresConnectionString(string raw)
+    {
+        var value = raw.Trim().Trim('"', '\'');
+
+        if (value.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+            value.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
+            {
+                throw new InvalidOperationException(
+                    "ConnectionStrings__DefaultConnection looks like a Postgres URL but is invalid. " +
+                    "Copy Internal Database URL from Render (must include user:password@host/db).");
+            }
+
+            var userInfo = uri.UserInfo.Split(':', 2);
+            if (userInfo.Length != 2 || string.IsNullOrEmpty(uri.Host) || string.IsNullOrEmpty(uri.AbsolutePath.Trim('/')))
+            {
+                throw new InvalidOperationException(
+                    "Postgres URL is missing user, password, host, or database. " +
+                    "Expected postgresql://USER:PASSWORD@HOST/DATABASE");
+            }
+
+            var username = Uri.UnescapeDataString(userInfo[0]);
+            var password = Uri.UnescapeDataString(userInfo[1]);
+            var database = Uri.UnescapeDataString(uri.AbsolutePath.Trim('/'));
+            var port = uri.IsDefaultPort ? 5432 : uri.Port;
+
+            // Render requires SSL.
+            return
+                $"Host={uri.Host};Port={port};Database={database};Username={username};Password={password};" +
+                "SSL Mode=Require;Trust Server Certificate=true";
+        }
+
+        if (!value.Contains('=', StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "ConnectionStrings__DefaultConnection must be a postgresql:// URL or Host=...;Username=...;Password=... string. " +
+                $"Got length={value.Length}, starts with '{value[..Math.Min(12, value.Length)]}'.");
+        }
+
+        return value;
+    }
+}
