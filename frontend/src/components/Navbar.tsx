@@ -1,8 +1,9 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Menu, Moon, Search, Sun, X } from 'lucide-react'
+import { Menu, Moon, Sun, X } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
+import { QuickSearch } from '@/components/QuickSearch'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `text-sm tracking-wide ${isActive ? 'text-text' : 'text-muted hover:text-text'}`
@@ -17,12 +18,16 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-bg/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="font-display text-2xl tracking-tight text-text" onClick={close}>
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-8">
+        <Link to="/" className="shrink-0 font-display text-2xl tracking-tight text-text" onClick={close}>
           Bee<span className="text-accent">Critic</span>
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <div className="hidden min-w-0 flex-1 md:block lg:max-w-md lg:flex-none">
+          <QuickSearch />
+        </div>
+
+        <nav className="hidden items-center gap-5 md:flex">
           <NavLink to="/movies" className={linkClass}>
             Movies
           </NavLink>
@@ -30,11 +35,11 @@ export function Navbar() {
             Discover
           </NavLink>
           <NavLink to="/search" className={linkClass}>
-            Search
+            Advanced Search
           </NavLink>
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="ml-auto hidden items-center gap-3 md:flex">
           <button
             type="button"
             onClick={toggleTheme}
@@ -78,10 +83,7 @@ export function Navbar() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
-          <Link to="/search" className="rounded-md border border-border p-2 text-muted" aria-label="Search">
-            <Search size={16} />
-          </Link>
+        <div className="ml-auto flex items-center gap-2 md:hidden">
           <button
             type="button"
             onClick={toggleTheme}
@@ -101,6 +103,10 @@ export function Navbar() {
         </div>
       </div>
 
+      <div className="border-t border-border px-4 py-2 md:hidden">
+        <QuickSearch />
+      </div>
+
       {open && (
         <div className="border-t border-border bg-bg px-4 py-4 md:hidden">
           <nav className="flex flex-col gap-4">
@@ -111,7 +117,7 @@ export function Navbar() {
               Discover
             </NavLink>
             <NavLink to="/search" className={linkClass} onClick={close}>
-              Search
+              Advanced Search
             </NavLink>
             {isAuthenticated && user ? (
               <>

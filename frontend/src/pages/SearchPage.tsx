@@ -217,9 +217,9 @@ export function SearchPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
       <header className="mb-10 max-w-2xl">
-        <h1 className="font-display text-4xl tracking-tight sm:text-5xl">Search</h1>
+        <h1 className="font-display text-4xl tracking-tight sm:text-5xl">Advanced Search</h1>
         <p className="mt-3 text-muted">
-          Find films by title, or combine genre, year, rating, and sort.
+          Combine title, genre, year, rating, and sort to narrow films.
         </p>
       </header>
 
