@@ -22,6 +22,9 @@ export interface Review {
   createdAt: string
   updatedAt: string
   commentCount: number
+  upvoteCount: number
+  downvoteCount: number
+  myVote: number | null
 }
 
 export interface Comment {
@@ -32,6 +35,15 @@ export interface Comment {
   content: string
   createdAt: string
   updatedAt: string
+  upvoteCount: number
+  downvoteCount: number
+  myVote: number | null
+}
+
+export interface VoteResult {
+  upvoteCount: number
+  downvoteCount: number
+  myVote: number | null
 }
 
 export interface PagedResult<T> {

@@ -22,7 +22,7 @@ export function CookieSettingsPage() {
       <div className="mt-10 space-y-4">
         <PreferenceRow
           title="Necessary"
-          description="Authentication token, theme preference, and consent storage in localStorage. Required for the app to function."
+          description="Authentication token and consent storage in localStorage. Required for the app to function."
           status="Always active"
           active
         />

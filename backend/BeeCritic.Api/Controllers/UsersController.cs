@@ -1,4 +1,5 @@
 using BeeCritic.Api.DTOs;
+using BeeCritic.Api.Helpers;
 using BeeCritic.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -29,6 +30,6 @@ public class UsersController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
-        return Ok(await _reviews.GetUserReviewsAsync(username, page, pageSize));
+        return Ok(await _reviews.GetUserReviewsAsync(username, page, pageSize, User.TryGetUserId()));
     }
 }

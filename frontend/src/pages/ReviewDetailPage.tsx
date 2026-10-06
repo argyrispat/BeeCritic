@@ -7,16 +7,29 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { commentsApi, reviewsApi, tmdbApi } from '@/api/client'
 import { RatingBadge } from '@/components/RatingSelector'
 import { ErrorState, PageLoader } from '@/components/States'
+import { SignInToVoteHint, VoteButtons } from '@/components/VoteButtons'
 import { useAuth } from '@/contexts/AuthContext'
 import { ApiError } from '@/lib/api'
 import { formatRelativeDate, posterUrl } from '@/lib/format'
-import type { Comment } from '@/types'
+import type { Comment, Review, VoteResult } from '@/types'
 
 const commentSchema = z.object({
   content: z.string().trim().min(1, 'Comment cannot be empty').max(2000),
 })
 
 type CommentForm = z.infer<typeof commentSchema>
+
+function applyVoteResult<T extends { upvoteCount: number; downvoteCount: number; myVote: number | null }>(
+  target: T,
+  result: VoteResult,
+): T {
+  return {
+    ...target,
+    upvoteCount: result.upvoteCount,
+    downvoteCount: result.downvoteCount,
+    myVote: result.myVote,
+  }
+}
 
 export function ReviewDetailPage() {
   const { movieId: movieIdParam, reviewId } = useParams()
@@ -69,6 +82,33 @@ export function ReviewDetailPage() {
       await queryClient.invalidateQueries({ queryKey: ['comments', reviewId] })
       await queryClient.invalidateQueries({ queryKey: ['review', reviewId] })
       await queryClient.invalidateQueries({ queryKey: ['reviews', movieId] })
+    },
+  })
+
+  const voteReview = useMutation({
+    mutationFn: (value: 1 | -1) => reviewsApi.vote(reviewId!, value),
+    onSuccess: (result) => {
+      queryClient.setQueryData<Review>(['review', reviewId], (current) =>
+        current ? applyVoteResult(current, result) : current,
+      )
+      void queryClient.invalidateQueries({ queryKey: ['reviews', movieId] })
+    },
+  })
+
+  const voteComment = useMutation({
+    mutationFn: ({ id, value }: { id: string; value: 1 | -1 }) =>
+      commentsApi.vote(id, value),
+    onSuccess: (result, { id }) => {
+      queryClient.setQueryData(['comments', reviewId], (current: unknown) => {
+        if (!current || typeof current !== 'object' || !('items' in current)) return current
+        const page = current as { items: Comment[] }
+        return {
+          ...page,
+          items: page.items.map((item) =>
+            item.id === id ? applyVoteResult(item, result) : item,
+          ),
+        }
+      })
     },
   })
 
@@ -132,6 +172,25 @@ export function ReviewDetailPage() {
           <span>{formatRelativeDate(r.createdAt)}</span>
         </div>
         <p className="mt-6 text-lg leading-relaxed">“{r.content}”</p>
+
+        <div className="mt-6 flex flex-wrap items-center gap-3 border-t border-border pt-5">
+          <VoteButtons
+            upvoteCount={r.upvoteCount}
+            downvoteCount={r.downvoteCount}
+            myVote={r.myVote === 1 || r.myVote === -1 ? r.myVote : null}
+            pending={voteReview.isPending}
+            interactive={isAuthenticated}
+            onVote={(value) => voteReview.mutate(value)}
+          />
+          {!isAuthenticated && <SignInToVoteHint />}
+          {voteReview.isError && (
+            <p className="text-xs text-danger">
+              {voteReview.error instanceof ApiError
+                ? voteReview.error.message
+                : 'Could not save vote.'}
+            </p>
+          )}
+        </div>
       </article>
 
       <section className="mt-12">
@@ -152,7 +211,9 @@ export function ReviewDetailPage() {
                 key={comment.id}
                 comment={comment}
                 isOwner={user?.userId === comment.userId}
+                isAuthenticated={isAuthenticated}
                 isEditing={editingCommentId === comment.id}
+                votePending={voteComment.isPending && voteComment.variables?.id === comment.id}
                 onEdit={() => setEditingCommentId(comment.id)}
                 onCancel={() => setEditingCommentId(null)}
                 onSave={async (content) => {
@@ -163,6 +224,7 @@ export function ReviewDetailPage() {
                     deleteComment.mutate(comment.id)
                   }
                 }}
+                onVote={(value) => voteComment.mutate({ id: comment.id, value })}
               />
             ))
           )}
@@ -224,19 +286,25 @@ export function ReviewDetailPage() {
 function CommentItem({
   comment,
   isOwner,
+  isAuthenticated,
   isEditing,
+  votePending,
   onEdit,
   onCancel,
   onSave,
   onDelete,
+  onVote,
 }: {
   comment: Comment
   isOwner: boolean
+  isAuthenticated: boolean
   isEditing: boolean
+  votePending: boolean
   onEdit: () => void
   onCancel: () => void
   onSave: (content: string) => Promise<void>
   onDelete: () => void
+  onVote: (value: 1 | -1) => void
 }) {
   const [draft, setDraft] = useState(comment.content)
   const [saving, setSaving] = useState(false)
@@ -300,7 +368,21 @@ function CommentItem({
           </div>
         </div>
       ) : (
-        <p className="mt-3 leading-relaxed text-text/90">“{comment.content}”</p>
+        <>
+          <p className="mt-3 leading-relaxed text-text/90">“{comment.content}”</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <VoteButtons
+              size="sm"
+              upvoteCount={comment.upvoteCount}
+              downvoteCount={comment.downvoteCount}
+              myVote={comment.myVote === 1 || comment.myVote === -1 ? comment.myVote : null}
+              pending={votePending}
+              interactive={isAuthenticated}
+              onVote={onVote}
+            />
+            {!isAuthenticated && <SignInToVoteHint />}
+          </div>
+        </>
       )}
     </div>
   )

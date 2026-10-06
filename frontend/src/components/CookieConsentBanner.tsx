@@ -16,8 +16,8 @@ export function CookieConsentBanner() {
         <div className="max-w-2xl">
           <p className="font-display text-lg text-text">Cookie notice</p>
           <p className="mt-2 text-sm leading-relaxed text-muted">
-            We use necessary browser storage for authentication tokens, theme preference, and this
-            consent choice. Analytics and advertising cookies are not currently used.{' '}
+            We use necessary browser storage for authentication tokens and this consent choice.
+            Analytics and advertising cookies are not currently used.{' '}
             <Link to="/cookies" className="text-accent hover:underline">
               Cookie Policy
             </Link>

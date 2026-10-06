@@ -12,4 +12,5 @@ public class Review
 
     public User User { get; set; } = null!;
     public ICollection<Comment> Comments { get; set; } = new List<Comment>();
+    public ICollection<ReviewVote> Votes { get; set; } = new List<ReviewVote>();
 }

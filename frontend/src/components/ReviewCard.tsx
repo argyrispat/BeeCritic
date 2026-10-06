@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MessageCircle } from 'lucide-react'
 import { RatingBadge } from '@/components/RatingSelector'
+import { VoteCounts } from '@/components/VoteButtons'
 import { formatRelativeDate, truncate } from '@/lib/format'
 import type { Review } from '@/types'
 
@@ -28,6 +29,10 @@ export function ReviewCard({ review, movieTitle, href }: ReviewCardProps) {
           <MessageCircle size={14} />
           {review.commentCount}
         </span>
+        <VoteCounts
+          upvoteCount={review.upvoteCount}
+          downvoteCount={review.downvoteCount}
+        />
       </div>
     </article>
   )

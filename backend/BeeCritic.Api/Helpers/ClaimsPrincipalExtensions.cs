@@ -14,4 +14,15 @@ public static class ClaimsPrincipalExtensions
 
         return id;
     }
+
+    public static Guid? TryGetUserId(this ClaimsPrincipal user)
+    {
+        if (user.Identity?.IsAuthenticated != true)
+            return null;
+
+        var value = user.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? user.FindFirstValue("sub");
+
+        return value is not null && Guid.TryParse(value, out var id) ? id : null;
+    }
 }

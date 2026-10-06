@@ -11,6 +11,7 @@ import type {
   TmdbMovieDetails,
   TmdbPagedResponse,
   UserProfile,
+  VoteResult,
 } from '@/types'
 
 export const authApi = {
@@ -80,6 +81,13 @@ export const reviewsApi = {
     }),
   remove: (id: string) =>
     apiFetch<void>(`/api/reviews/${id}`, { method: 'DELETE' }),
+  vote: (id: string, value: 1 | -1) =>
+    apiFetch<VoteResult>(`/api/reviews/${id}/vote`, {
+      method: 'POST',
+      body: JSON.stringify({ value }),
+    }),
+  clearVote: (id: string) =>
+    apiFetch<VoteResult>(`/api/reviews/${id}/vote`, { method: 'DELETE' }),
   popularOnPlatform: (limit = 12) =>
     apiFetch<PopularMovie[]>(`/api/platform/popular-movies?limit=${limit}`),
   recent: (limit = 12) =>
@@ -103,6 +111,13 @@ export const commentsApi = {
     }),
   remove: (id: string) =>
     apiFetch<void>(`/api/comments/${id}`, { method: 'DELETE' }),
+  vote: (id: string, value: 1 | -1) =>
+    apiFetch<VoteResult>(`/api/comments/${id}/vote`, {
+      method: 'POST',
+      body: JSON.stringify({ value }),
+    }),
+  clearVote: (id: string) =>
+    apiFetch<VoteResult>(`/api/comments/${id}/vote`, { method: 'DELETE' }),
 }
 
 export const usersApi = {

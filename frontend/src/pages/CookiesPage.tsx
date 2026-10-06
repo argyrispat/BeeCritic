@@ -34,9 +34,6 @@ export function CookiesPage() {
             (id, username, email) for UI state
           </li>
           <li>
-            <span className="text-text">beecritic_theme</span> — light/dark theme preference
-          </li>
-          <li>
             <span className="text-text">beecritic_cookie_consent</span> — records that you
             acknowledged this notice / saved preferences
           </li>

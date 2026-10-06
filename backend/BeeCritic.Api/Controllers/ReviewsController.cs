@@ -11,10 +11,12 @@ namespace BeeCritic.Api.Controllers;
 public class ReviewsController : ControllerBase
 {
     private readonly IReviewService _reviews;
+    private readonly IVoteService _votes;
 
-    public ReviewsController(IReviewService reviews)
+    public ReviewsController(IReviewService reviews, IVoteService votes)
     {
         _reviews = reviews;
+        _votes = votes;
     }
 
     [HttpGet("movies/{tmdbMovieId:int}/reviews")]
@@ -23,7 +25,7 @@ public class ReviewsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10)
     {
-        return Ok(await _reviews.GetMovieReviewsAsync(tmdbMovieId, page, pageSize));
+        return Ok(await _reviews.GetMovieReviewsAsync(tmdbMovieId, page, pageSize, User.TryGetUserId()));
     }
 
     [HttpGet("movies/{tmdbMovieId:int}/stats")]
@@ -36,7 +38,8 @@ public class ReviewsController : ControllerBase
     [Authorize]
     public async Task<ActionResult<ReviewDto>> GetMyReview(int tmdbMovieId)
     {
-        var review = await _reviews.GetUserReviewForMovieAsync(User.GetUserId(), tmdbMovieId);
+        var userId = User.GetUserId();
+        var review = await _reviews.GetUserReviewForMovieAsync(userId, tmdbMovieId, userId);
         if (review is null) return NotFound(new ApiError("You have not reviewed this movie yet."));
         return Ok(review);
     }
@@ -52,7 +55,7 @@ public class ReviewsController : ControllerBase
     [HttpGet("reviews/{id:guid}")]
     public async Task<ActionResult<ReviewDto>> GetReview(Guid id)
     {
-        var review = await _reviews.GetByIdAsync(id);
+        var review = await _reviews.GetByIdAsync(id, User.TryGetUserId());
         if (review is null) return NotFound(new ApiError("Review not found."));
         return Ok(review);
     }
@@ -72,6 +75,20 @@ public class ReviewsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("reviews/{id:guid}/vote")]
+    [Authorize]
+    public async Task<ActionResult<VoteResultDto>> VoteReview(Guid id, [FromBody] VoteRequest request)
+    {
+        return Ok(await _votes.SetReviewVoteAsync(User.GetUserId(), id, request.Value));
+    }
+
+    [HttpDelete("reviews/{id:guid}/vote")]
+    [Authorize]
+    public async Task<ActionResult<VoteResultDto>> ClearReviewVote(Guid id)
+    {
+        return Ok(await _votes.ClearReviewVoteAsync(User.GetUserId(), id));
+    }
+
     [HttpGet("platform/popular-movies")]
     public async Task<ActionResult<IReadOnlyList<PopularMovieDto>>> GetPopularOnPlatform([FromQuery] int limit = 12)
     {
@@ -81,6 +98,6 @@ public class ReviewsController : ControllerBase
     [HttpGet("platform/recent-reviews")]
     public async Task<ActionResult<IReadOnlyList<ReviewDto>>> GetRecentReviews([FromQuery] int limit = 12)
     {
-        return Ok(await _reviews.GetRecentReviewsAsync(Math.Clamp(limit, 1, 24)));
+        return Ok(await _reviews.GetRecentReviewsAsync(Math.Clamp(limit, 1, 24), User.TryGetUserId()));
     }
 }

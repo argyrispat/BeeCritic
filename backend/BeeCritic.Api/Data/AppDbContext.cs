@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Review> Reviews => Set<Review>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<ReviewVote> ReviewVotes => Set<ReviewVote>();
+    public DbSet<CommentVote> CommentVotes => Set<CommentVote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -55,6 +57,42 @@ public class AppDbContext : DbContext
                 .WithMany(u => u.Comments)
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ReviewVote>(entity =>
+        {
+            entity.HasKey(v => v.Id);
+            entity.HasIndex(v => new { v.ReviewId, v.UserId }).IsUnique();
+            entity.Property(v => v.Value).IsRequired();
+            entity.ToTable(t => t.HasCheckConstraint("CK_ReviewVote_Value", "\"Value\" = 1 OR \"Value\" = -1"));
+
+            entity.HasOne(v => v.Review)
+                .WithMany(r => r.Votes)
+                .HasForeignKey(v => v.ReviewId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(v => v.User)
+                .WithMany(u => u.ReviewVotes)
+                .HasForeignKey(v => v.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<CommentVote>(entity =>
+        {
+            entity.HasKey(v => v.Id);
+            entity.HasIndex(v => new { v.CommentId, v.UserId }).IsUnique();
+            entity.Property(v => v.Value).IsRequired();
+            entity.ToTable(t => t.HasCheckConstraint("CK_CommentVote_Value", "\"Value\" = 1 OR \"Value\" = -1"));
+
+            entity.HasOne(v => v.Comment)
+                .WithMany(c => c.Votes)
+                .HasForeignKey(v => v.CommentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(v => v.User)
+                .WithMany(u => u.CommentVotes)
+                .HasForeignKey(v => v.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -3,6 +3,7 @@ import { useQueries, useQuery } from '@tanstack/react-query'
 import { tmdbApi, usersApi } from '@/api/client'
 import { RatingBadge } from '@/components/RatingSelector'
 import { EmptyState, ErrorState, PageLoader } from '@/components/States'
+import { VoteCounts } from '@/components/VoteButtons'
 import { useAuth } from '@/contexts/AuthContext'
 import { ApiError } from '@/lib/api'
 import { formatMemberSince, formatRelativeDate, posterUrl, truncate } from '@/lib/format'
@@ -122,9 +123,13 @@ export function ProfilePage() {
                       <p className="mt-2 text-sm leading-relaxed text-muted">
                         “{truncate(review.content, 140)}”
                       </p>
-                      <p className="mt-3 text-xs text-muted">
-                        {formatRelativeDate(review.createdAt)}
-                      </p>
+                      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted">
+                        <span>{formatRelativeDate(review.createdAt)}</span>
+                        <VoteCounts
+                          upvoteCount={review.upvoteCount}
+                          downvoteCount={review.downvoteCount}
+                        />
+                      </div>
                     </div>
                   </Link>
                 )

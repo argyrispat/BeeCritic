@@ -40,7 +40,10 @@ public record ReviewDto(
     string Content,
     DateTime CreatedAt,
     DateTime UpdatedAt,
-    int CommentCount
+    int CommentCount,
+    int UpvoteCount,
+    int DownvoteCount,
+    int? MyVote
 );
 
 public record CreateCommentRequest(
@@ -58,7 +61,20 @@ public record CommentDto(
     string Username,
     string Content,
     DateTime CreatedAt,
-    DateTime UpdatedAt
+    DateTime UpdatedAt,
+    int UpvoteCount,
+    int DownvoteCount,
+    int? MyVote
+);
+
+public record VoteRequest(
+    [Required] int Value
+);
+
+public record VoteResultDto(
+    int UpvoteCount,
+    int DownvoteCount,
+    int? MyVote
 );
 
 public record UserProfileDto(

@@ -1,15 +1,13 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Menu, Moon, Sun, X } from 'lucide-react'
+import { Menu, User, X } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useTheme } from '@/contexts/ThemeContext'
 import { QuickSearch } from '@/components/QuickSearch'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `text-sm tracking-wide ${isActive ? 'text-text' : 'text-muted hover:text-text'}`
 
 export function Navbar() {
-  const { theme, toggleTheme } = useTheme()
   const { isAuthenticated, user, logout } = useAuth()
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
@@ -48,21 +46,14 @@ export function Navbar() {
         </nav>
 
         <div className="ml-auto hidden items-center gap-3 md:flex">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="rounded-md border border-border p-2 text-muted hover:text-text"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-
           {isAuthenticated && user ? (
             <>
               <Link
                 to={`/u/${user.username}`}
-                className="text-sm text-muted hover:text-text"
+                className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-text"
+                aria-label={`Profile: ${user.username}`}
               >
+                <User size={16} strokeWidth={1.75} />
                 {user.username}
               </Link>
               <button
@@ -94,14 +85,6 @@ export function Navbar() {
         <div className="ml-auto flex items-center gap-2 md:hidden">
           <button
             type="button"
-            onClick={toggleTheme}
-            className="rounded-md border border-border p-2 text-muted"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-          <button
-            type="button"
             onClick={() => setOpen((v) => !v)}
             className="rounded-md border border-border p-2 text-muted"
             aria-label="Menu"
@@ -129,7 +112,14 @@ export function Navbar() {
             </NavLink>
             {isAuthenticated && user ? (
               <>
-                <NavLink to={`/u/${user.username}`} className={linkClass} onClick={close}>
+                <NavLink
+                  to={`/u/${user.username}`}
+                  className={({ isActive }) =>
+                    `inline-flex items-center gap-1.5 ${linkClass({ isActive })}`
+                  }
+                  onClick={close}
+                >
+                  <User size={16} strokeWidth={1.75} />
                   Profile
                 </NavLink>
                 <button

@@ -7,16 +7,16 @@ namespace BeeCritic.Api.Services;
 
 public interface IReviewService
 {
-    Task<PagedResult<ReviewDto>> GetMovieReviewsAsync(int tmdbMovieId, int page, int pageSize);
-    Task<ReviewDto?> GetByIdAsync(Guid id);
-    Task<ReviewDto?> GetUserReviewForMovieAsync(Guid userId, int tmdbMovieId);
+    Task<PagedResult<ReviewDto>> GetMovieReviewsAsync(int tmdbMovieId, int page, int pageSize, Guid? currentUserId = null);
+    Task<ReviewDto?> GetByIdAsync(Guid id, Guid? currentUserId = null);
+    Task<ReviewDto?> GetUserReviewForMovieAsync(Guid userId, int tmdbMovieId, Guid? currentUserId = null);
     Task<ReviewDto> CreateAsync(Guid userId, int tmdbMovieId, CreateReviewRequest request);
     Task<ReviewDto> UpdateAsync(Guid userId, Guid reviewId, UpdateReviewRequest request);
     Task DeleteAsync(Guid userId, Guid reviewId);
     Task<MovieStatsDto> GetMovieStatsAsync(int tmdbMovieId);
     Task<IReadOnlyList<PopularMovieDto>> GetPopularOnPlatformAsync(int limit = 12);
-    Task<IReadOnlyList<ReviewDto>> GetRecentReviewsAsync(int limit = 12);
-    Task<PagedResult<ReviewDto>> GetUserReviewsAsync(string username, int page, int pageSize);
+    Task<IReadOnlyList<ReviewDto>> GetRecentReviewsAsync(int limit = 12, Guid? currentUserId = null);
+    Task<PagedResult<ReviewDto>> GetUserReviewsAsync(string username, int page, int pageSize, Guid? currentUserId = null);
 }
 
 public class ReviewService : IReviewService
@@ -28,7 +28,7 @@ public class ReviewService : IReviewService
         _db = db;
     }
 
-    public async Task<PagedResult<ReviewDto>> GetMovieReviewsAsync(int tmdbMovieId, int page, int pageSize)
+    public async Task<PagedResult<ReviewDto>> GetMovieReviewsAsync(int tmdbMovieId, int page, int pageSize, Guid? currentUserId = null)
     {
         (page, pageSize) = NormalizePaging(page, pageSize);
 
@@ -41,27 +41,27 @@ public class ReviewService : IReviewService
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(ToDto)
+            .Select(ToDto(currentUserId))
             .ToListAsync();
 
         return new PagedResult<ReviewDto>(items, page, pageSize, total, TotalPages(total, pageSize));
     }
 
-    public async Task<ReviewDto?> GetByIdAsync(Guid id)
+    public async Task<ReviewDto?> GetByIdAsync(Guid id, Guid? currentUserId = null)
     {
         return await _db.Reviews
             .AsNoTracking()
             .Where(r => r.Id == id)
-            .Select(ToDto)
+            .Select(ToDto(currentUserId))
             .FirstOrDefaultAsync();
     }
 
-    public async Task<ReviewDto?> GetUserReviewForMovieAsync(Guid userId, int tmdbMovieId)
+    public async Task<ReviewDto?> GetUserReviewForMovieAsync(Guid userId, int tmdbMovieId, Guid? currentUserId = null)
     {
         return await _db.Reviews
             .AsNoTracking()
             .Where(r => r.UserId == userId && r.TmdbMovieId == tmdbMovieId)
-            .Select(ToDto)
+            .Select(ToDto(currentUserId))
             .FirstOrDefaultAsync();
     }
 
@@ -96,7 +96,7 @@ public class ReviewService : IReviewService
             throw new AppException("You have already reviewed this movie.", StatusCodes.Status409Conflict);
         }
 
-        return (await GetByIdAsync(review.Id))!;
+        return (await GetByIdAsync(review.Id, userId))!;
     }
 
     public async Task<ReviewDto> UpdateAsync(Guid userId, Guid reviewId, UpdateReviewRequest request)
@@ -114,7 +114,7 @@ public class ReviewService : IReviewService
         review.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        return (await GetByIdAsync(review.Id))!;
+        return (await GetByIdAsync(review.Id, userId))!;
     }
 
     public async Task DeleteAsync(Guid userId, Guid reviewId)
@@ -169,17 +169,17 @@ public class ReviewService : IReviewService
             .ToList();
     }
 
-    public async Task<IReadOnlyList<ReviewDto>> GetRecentReviewsAsync(int limit = 12)
+    public async Task<IReadOnlyList<ReviewDto>> GetRecentReviewsAsync(int limit = 12, Guid? currentUserId = null)
     {
         return await _db.Reviews
             .AsNoTracking()
             .OrderByDescending(r => r.CreatedAt)
             .Take(limit)
-            .Select(ToDto)
+            .Select(ToDto(currentUserId))
             .ToListAsync();
     }
 
-    public async Task<PagedResult<ReviewDto>> GetUserReviewsAsync(string username, int page, int pageSize)
+    public async Task<PagedResult<ReviewDto>> GetUserReviewsAsync(string username, int page, int pageSize, Guid? currentUserId = null)
     {
         (page, pageSize) = NormalizePaging(page, pageSize);
 
@@ -196,13 +196,13 @@ public class ReviewService : IReviewService
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(ToDto)
+            .Select(ToDto(currentUserId))
             .ToListAsync();
 
         return new PagedResult<ReviewDto>(items, page, pageSize, total, TotalPages(total, pageSize));
     }
 
-    private static System.Linq.Expressions.Expression<Func<Review, ReviewDto>> ToDto => r => new ReviewDto(
+    private static System.Linq.Expressions.Expression<Func<Review, ReviewDto>> ToDto(Guid? currentUserId) => r => new ReviewDto(
         r.Id,
         r.UserId,
         r.User.Username,
@@ -211,7 +211,12 @@ public class ReviewService : IReviewService
         r.Content,
         r.CreatedAt,
         r.UpdatedAt,
-        r.Comments.Count
+        r.Comments.Count,
+        r.Votes.Count(v => v.Value == 1),
+        r.Votes.Count(v => v.Value == -1),
+        currentUserId == null
+            ? null
+            : r.Votes.Where(v => v.UserId == currentUserId).Select(v => (int?)v.Value).FirstOrDefault()
     );
 
     private static void ValidateReview(int rating, string content)

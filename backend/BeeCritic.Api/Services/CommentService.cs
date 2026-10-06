@@ -7,7 +7,7 @@ namespace BeeCritic.Api.Services;
 
 public interface ICommentService
 {
-    Task<PagedResult<CommentDto>> GetByReviewAsync(Guid reviewId, int page, int pageSize);
+    Task<PagedResult<CommentDto>> GetByReviewAsync(Guid reviewId, int page, int pageSize, Guid? currentUserId = null);
     Task<CommentDto> CreateAsync(Guid userId, Guid reviewId, CreateCommentRequest request);
     Task<CommentDto> UpdateAsync(Guid userId, Guid commentId, UpdateCommentRequest request);
     Task DeleteAsync(Guid userId, Guid commentId);
@@ -22,7 +22,7 @@ public class CommentService : ICommentService
         _db = db;
     }
 
-    public async Task<PagedResult<CommentDto>> GetByReviewAsync(Guid reviewId, int page, int pageSize)
+    public async Task<PagedResult<CommentDto>> GetByReviewAsync(Guid reviewId, int page, int pageSize, Guid? currentUserId = null)
     {
         page = page < 1 ? 1 : page;
         pageSize = pageSize is < 1 or > 50 ? 20 : pageSize;
@@ -40,15 +40,7 @@ public class CommentService : ICommentService
         var items = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(c => new CommentDto(
-                c.Id,
-                c.ReviewId,
-                c.UserId,
-                c.User.Username,
-                c.Content,
-                c.CreatedAt,
-                c.UpdatedAt
-            ))
+            .Select(ToDto(currentUserId))
             .ToListAsync();
 
         var totalPages = (int)Math.Ceiling(total / (double)pageSize);
@@ -77,7 +69,7 @@ public class CommentService : ICommentService
         _db.Comments.Add(comment);
         await _db.SaveChangesAsync();
 
-        return await GetDto(comment.Id);
+        return await GetDto(comment.Id, userId);
     }
 
     public async Task<CommentDto> UpdateAsync(Guid userId, Guid commentId, UpdateCommentRequest request)
@@ -93,7 +85,7 @@ public class CommentService : ICommentService
         comment.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
-        return await GetDto(comment.Id);
+        return await GetDto(comment.Id, userId);
     }
 
     public async Task DeleteAsync(Guid userId, Guid commentId)
@@ -108,22 +100,29 @@ public class CommentService : ICommentService
         await _db.SaveChangesAsync();
     }
 
-    private async Task<CommentDto> GetDto(Guid id)
+    private async Task<CommentDto> GetDto(Guid id, Guid? currentUserId)
     {
         return await _db.Comments
             .AsNoTracking()
             .Where(c => c.Id == id)
-            .Select(c => new CommentDto(
-                c.Id,
-                c.ReviewId,
-                c.UserId,
-                c.User.Username,
-                c.Content,
-                c.CreatedAt,
-                c.UpdatedAt
-            ))
+            .Select(ToDto(currentUserId))
             .FirstAsync();
     }
+
+    private static System.Linq.Expressions.Expression<Func<Comment, CommentDto>> ToDto(Guid? currentUserId) => c => new CommentDto(
+        c.Id,
+        c.ReviewId,
+        c.UserId,
+        c.User.Username,
+        c.Content,
+        c.CreatedAt,
+        c.UpdatedAt,
+        c.Votes.Count(v => v.Value == 1),
+        c.Votes.Count(v => v.Value == -1),
+        currentUserId == null
+            ? null
+            : c.Votes.Where(v => v.UserId == currentUserId).Select(v => (int?)v.Value).FirstOrDefault()
+    );
 
     private static string ValidateContent(string content)
     {

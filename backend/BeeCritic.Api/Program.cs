@@ -33,6 +33,7 @@ builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IReviewService, ReviewService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<IVoteService, VoteService>();
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddControllers();

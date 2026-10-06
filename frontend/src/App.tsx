@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Layout } from '@/components/Layout'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { CookieConsentProvider } from '@/contexts/CookieConsentContext'
-import { ThemeProvider } from '@/contexts/ThemeContext'
 import { CookieSettingsPage } from '@/pages/CookieSettingsPage'
 import { CookiesPage } from '@/pages/CookiesPage'
 import { DiscoverPage } from '@/pages/DiscoverPage'
@@ -32,36 +31,34 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <CookieConsentProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <Routes>
-                <Route element={<Layout />}>
-                  <Route index element={<HomePage />} />
-                  <Route path="movies" element={<MoviesPage />} />
-                  <Route path="discover" element={<DiscoverPage />} />
-                  <Route path="search" element={<SearchPage />} />
-                  <Route path="movie/:id" element={<MoviePage />} />
-                  <Route
-                    path="movie/:movieId/reviews/:reviewId"
-                    element={<ReviewDetailPage />}
-                  />
-                  <Route path="u/:username" element={<ProfilePage />} />
-                  <Route path="signin" element={<SignInPage />} />
-                  <Route path="signup" element={<SignUpPage />} />
-                  <Route path="login" element={<Navigate to="/signin" replace />} />
-                  <Route path="privacy" element={<PrivacyPage />} />
-                  <Route path="cookies" element={<CookiesPage />} />
-                  <Route path="terms" element={<TermsPage />} />
-                  <Route path="cookie-settings" element={<CookieSettingsPage />} />
-                  <Route path="*" element={<NotFoundPage />} />
-                </Route>
-              </Routes>
-            </BrowserRouter>
-          </AuthProvider>
-        </CookieConsentProvider>
-      </ThemeProvider>
+      <CookieConsentProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route index element={<HomePage />} />
+                <Route path="movies" element={<MoviesPage />} />
+                <Route path="discover" element={<DiscoverPage />} />
+                <Route path="search" element={<SearchPage />} />
+                <Route path="movie/:id" element={<MoviePage />} />
+                <Route
+                  path="movie/:movieId/reviews/:reviewId"
+                  element={<ReviewDetailPage />}
+                />
+                <Route path="u/:username" element={<ProfilePage />} />
+                <Route path="signin" element={<SignInPage />} />
+                <Route path="signup" element={<SignUpPage />} />
+                <Route path="login" element={<Navigate to="/signin" replace />} />
+                <Route path="privacy" element={<PrivacyPage />} />
+                <Route path="cookies" element={<CookiesPage />} />
+                <Route path="terms" element={<TermsPage />} />
+                <Route path="cookie-settings" element={<CookieSettingsPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
+      </CookieConsentProvider>
     </QueryClientProvider>
   )
 }

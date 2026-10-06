@@ -1,7 +1,7 @@
 export const COOKIE_CONSENT_KEY = 'beecritic_cookie_consent'
 
 export type CookiePreferences = {
-  /** Always required for auth tokens, theme, and consent storage. */
+  /** Always required for auth tokens and consent storage. */
   necessary: true
   /** Not implemented in this demo. Kept for a future optional category. */
   analytics: boolean

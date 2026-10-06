@@ -46,7 +46,6 @@ export function PrivacyPage() {
             Authentication JWT and a small user snapshot stored in the browser’s{' '}
             <code className="text-text">localStorage</code> while you remain signed in
           </li>
-          <li>Theme preference (light/dark) stored locally</li>
           <li>Cookie/storage consent acknowledgment stored locally</li>
         </ul>
 
@@ -61,7 +60,7 @@ export function PrivacyPage() {
           <li>Authentication and account security</li>
           <li>Providing core application functionality (reviews, comments, profiles)</li>
           <li>Displaying public usernames with user-generated content</li>
-          <li>Remembering theme and consent preferences on your device</li>
+          <li>Remembering consent preferences on your device</li>
           <li>Demonstrating the application’s functionality as a portfolio project</li>
         </ul>
       </LegalSection>
@@ -70,7 +69,7 @@ export function PrivacyPage() {
         <p>
           Account and application data are stored in a PostgreSQL database accessed by the BeeCritic
           API. Passwords are stored only as BCrypt hashes. Authentication uses short-lived JWTs
-          validated server-side. Theme and consent preferences remain on your device.
+          validated server-side. Consent preferences remain on your device.
         </p>
       </LegalSection>
 

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MessageCircle } from 'lucide-react'
 import { RatingBadge } from '@/components/RatingSelector'
+import { VoteCounts } from '@/components/VoteButtons'
 import { formatRelativeDate, posterUrl, truncate } from '@/lib/format'
 import type { Review, TmdbMovieDetails } from '@/types'
 
@@ -102,6 +103,10 @@ function ReviewScrollCard({
             <MessageCircle size={12} />
             {review.commentCount}
           </span>
+          <VoteCounts
+            upvoteCount={review.upvoteCount}
+            downvoteCount={review.downvoteCount}
+          />
         </div>
       </div>
     </Link>

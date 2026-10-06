@@ -11,10 +11,12 @@ namespace BeeCritic.Api.Controllers;
 public class CommentsController : ControllerBase
 {
     private readonly ICommentService _comments;
+    private readonly IVoteService _votes;
 
-    public CommentsController(ICommentService comments)
+    public CommentsController(ICommentService comments, IVoteService votes)
     {
         _comments = comments;
+        _votes = votes;
     }
 
     [HttpGet("reviews/{reviewId:guid}/comments")]
@@ -23,7 +25,7 @@ public class CommentsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        return Ok(await _comments.GetByReviewAsync(reviewId, page, pageSize));
+        return Ok(await _comments.GetByReviewAsync(reviewId, page, pageSize, User.TryGetUserId()));
     }
 
     [HttpPost("reviews/{reviewId:guid}/comments")]
@@ -47,5 +49,19 @@ public class CommentsController : ControllerBase
     {
         await _comments.DeleteAsync(User.GetUserId(), id);
         return NoContent();
+    }
+
+    [HttpPost("comments/{id:guid}/vote")]
+    [Authorize]
+    public async Task<ActionResult<VoteResultDto>> VoteComment(Guid id, [FromBody] VoteRequest request)
+    {
+        return Ok(await _votes.SetCommentVoteAsync(User.GetUserId(), id, request.Value));
+    }
+
+    [HttpDelete("comments/{id:guid}/vote")]
+    [Authorize]
+    public async Task<ActionResult<VoteResultDto>> ClearCommentVote(Guid id)
+    {
+        return Ok(await _votes.ClearCommentVoteAsync(User.GetUserId(), id));
     }
 }
