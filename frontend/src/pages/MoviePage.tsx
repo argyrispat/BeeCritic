@@ -31,7 +31,8 @@ export function MoviePage() {
     queryKey: ['tmdb', 'movie', movieId],
     enabled: Number.isFinite(movieId) && movieId > 0,
     queryFn: () => tmdbApi.movie(movieId),
-    retry: 1,
+    retry: 2,
+    refetchOnMount: 'always',
   })
 
   const stats = useQuery({

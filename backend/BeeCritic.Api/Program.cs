@@ -26,7 +26,7 @@ builder.Services.AddHttpClient<ITmdbService, TmdbService>(client =>
 {
     var baseUrl = builder.Configuration[$"{TmdbSettings.SectionName}:BaseUrl"] ?? "https://api.themoviedb.org/3";
     client.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
-    client.Timeout = TimeSpan.FromSeconds(15);
+    client.Timeout = TimeSpan.FromSeconds(30);
 });
 
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
@@ -101,8 +101,8 @@ builder.Services.AddRateLimiter(options =>
     options.AddFixedWindowLimiter("api", limiter =>
     {
         limiter.Window = TimeSpan.FromMinutes(1);
-        limiter.PermitLimit = 120;
-        limiter.QueueLimit = 0;
+        limiter.PermitLimit = 300;
+        limiter.QueueLimit = 20;
     });
 });
 

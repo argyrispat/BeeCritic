@@ -52,7 +52,7 @@ public class TmdbService : ITmdbService
 
         try
         {
-            var raw = await GetAsync<TmdbMovieDetailsRaw>($"movie/{movieId}?append_to_response=credits");
+            var raw = await GetAsyncWithRetry<TmdbMovieDetailsRaw>($"movie/{movieId}?append_to_response=credits");
             if (raw is null) return null;
 
             var details = MapDetails(raw);
@@ -101,10 +101,36 @@ public class TmdbService : ITmdbService
         return result;
     }
 
+    private async Task<T?> GetAsyncWithRetry<T>(string path, int attempts = 3)
+    {
+        Exception? last = null;
+        for (var i = 1; i <= attempts; i++)
+        {
+            try
+            {
+                return await GetAsync<T>(path);
+            }
+            catch (AppException ex) when (ex.StatusCode is StatusCodes.Status502BadGateway or StatusCodes.Status503ServiceUnavailable)
+            {
+                last = ex;
+                if (i == attempts) throw;
+                await Task.Delay(200 * i);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode != System.Net.HttpStatusCode.NotFound)
+            {
+                last = ex;
+                if (i == attempts) throw;
+                await Task.Delay(200 * i);
+            }
+        }
+
+        throw last ?? new AppException("Failed to reach TMDB.", StatusCodes.Status502BadGateway);
+    }
+
     private async Task<T?> GetAsync<T>(string path)
     {
         if (string.IsNullOrWhiteSpace(_settings.ApiKey))
-            throw new AppException("TMDB API key is not configured.", StatusCodes.Status503ServiceUnavailable);
+            throw new AppException("TMDB API key is not configured. Set Tmdb:ApiKey in appsettings.Development.json.", StatusCodes.Status503ServiceUnavailable);
 
         var separator = path.Contains('?') ? "&" : "?";
         var url = $"{path}{separator}api_key={_settings.ApiKey}";
@@ -118,7 +144,13 @@ public class TmdbService : ITmdbService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("TMDB request failed: {Status} {Path}", response.StatusCode, path);
-                throw new AppException("TMDB service is temporarily unavailable.", StatusCodes.Status502BadGateway);
+                var detail = response.StatusCode switch
+                {
+                    System.Net.HttpStatusCode.Unauthorized => "TMDB rejected the API key.",
+                    System.Net.HttpStatusCode.TooManyRequests => "TMDB rate limit hit. Try again in a moment.",
+                    _ => $"TMDB returned {(int)response.StatusCode}."
+                };
+                throw new AppException(detail, StatusCodes.Status502BadGateway);
             }
 
             return await response.Content.ReadFromJsonAsync<T>(JsonOptions);
