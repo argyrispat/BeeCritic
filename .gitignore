@@ -14,6 +14,7 @@ dist/
 appsettings.*.local.json
 **/secrets.json
 backend/BeeCritic.Api/appsettings.Local.json
+backend/BeeCritic.Api/appsettings.Development.json
 
 # Logs & OS
 *.log
