@@ -77,4 +77,10 @@ public class ReviewsController : ControllerBase
     {
         return Ok(await _reviews.GetPopularOnPlatformAsync(Math.Clamp(limit, 1, 24)));
     }
+
+    [HttpGet("platform/recent-reviews")]
+    public async Task<ActionResult<IReadOnlyList<ReviewDto>>> GetRecentReviews([FromQuery] int limit = 12)
+    {
+        return Ok(await _reviews.GetRecentReviewsAsync(Math.Clamp(limit, 1, 24)));
+    }
 }

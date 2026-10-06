@@ -63,6 +63,8 @@ export const reviewsApi = {
     apiFetch<void>(`/api/reviews/${id}`, { method: 'DELETE' }),
   popularOnPlatform: (limit = 12) =>
     apiFetch<PopularMovie[]>(`/api/platform/popular-movies?limit=${limit}`),
+  recent: (limit = 12) =>
+    apiFetch<Review[]>(`/api/platform/recent-reviews?limit=${limit}`),
 }
 
 export const commentsApi = {

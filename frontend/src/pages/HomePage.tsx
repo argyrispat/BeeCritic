@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQueries, useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { reviewsApi, tmdbApi } from '@/api/client'
 import { MovieRow, SectionLink } from '@/components/MovieRow'
+import { ReviewRow } from '@/components/ReviewRow'
 import { ErrorState } from '@/components/States'
 import { backdropUrl, yearFromDate } from '@/lib/format'
-import type { TmdbMovieSummary } from '@/types'
+import type { TmdbMovieDetails, TmdbMovieSummary } from '@/types'
 
 export function HomePage() {
   const trending = useQuery({ queryKey: ['tmdb', 'trending'], queryFn: () => tmdbApi.trending() })
@@ -18,6 +19,26 @@ export function HomePage() {
     queryKey: ['platform', 'popular'],
     queryFn: () => reviewsApi.popularOnPlatform(12),
   })
+  const recentReviews = useQuery({
+    queryKey: ['platform', 'recent-reviews'],
+    queryFn: () => reviewsApi.recent(12),
+  })
+
+  const recentMovieIds = [
+    ...new Set((recentReviews.data ?? []).map((r) => r.tmdbMovieId)),
+  ]
+
+  const recentMovieQueries = useQueries({
+    queries: recentMovieIds.map((id) => ({
+      queryKey: ['tmdb', 'movie', id],
+      queryFn: () => tmdbApi.movie(id),
+      enabled: recentReviews.isSuccess,
+    })),
+  })
+
+  const moviesById = Object.fromEntries(
+    recentMovieIds.map((id, index) => [id, recentMovieQueries[index]?.data as TmdbMovieDetails | undefined]),
+  )
 
   const platformMovieQueries = useQuery({
     queryKey: ['platform', 'popular-movies', platformPopular.data?.map((m) => m.tmdbMovieId)],
@@ -113,6 +134,13 @@ export function HomePage() {
           movies={trending.data?.results.slice(0, 12)}
           isLoading={trending.isLoading}
           action={<SectionLink to="/discover">See all</SectionLink>}
+        />
+        <ReviewRow
+          title="Recent Reviews"
+          reviews={recentReviews.data}
+          moviesById={moviesById}
+          isLoading={recentReviews.isLoading}
+          emptyMessage="No community reviews yet. Be the first to rate a film."
         />
         <MovieRow
           title="Popular"

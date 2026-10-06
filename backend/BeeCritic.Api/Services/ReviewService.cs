@@ -15,6 +15,7 @@ public interface IReviewService
     Task DeleteAsync(Guid userId, Guid reviewId);
     Task<MovieStatsDto> GetMovieStatsAsync(int tmdbMovieId);
     Task<IReadOnlyList<PopularMovieDto>> GetPopularOnPlatformAsync(int limit = 12);
+    Task<IReadOnlyList<ReviewDto>> GetRecentReviewsAsync(int limit = 12);
     Task<PagedResult<ReviewDto>> GetUserReviewsAsync(string username, int page, int pageSize);
 }
 
@@ -166,6 +167,16 @@ public class ReviewService : IReviewService
                 m.ReviewCount
             ))
             .ToList();
+    }
+
+    public async Task<IReadOnlyList<ReviewDto>> GetRecentReviewsAsync(int limit = 12)
+    {
+        return await _db.Reviews
+            .AsNoTracking()
+            .OrderByDescending(r => r.CreatedAt)
+            .Take(limit)
+            .Select(ToDto)
+            .ToListAsync();
     }
 
     public async Task<PagedResult<ReviewDto>> GetUserReviewsAsync(string username, int page, int pageSize)
