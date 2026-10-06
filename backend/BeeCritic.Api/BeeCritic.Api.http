@@ -1,0 +1,6 @@
+@BeeCritic.Api_HostAddress = http://localhost:5074
+
+GET {{BeeCritic.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

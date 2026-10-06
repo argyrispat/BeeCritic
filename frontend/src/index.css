@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Newsreader", ui-serif, Georgia, serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+}
+
+:root {
+  --bg: #f4f1ea;
+  --surface: #ffffff;
+  --surface-2: #ebe6dc;
+  --border: #d9d2c5;
+  --text: #16141a;
+  --muted: #6f6a62;
+  --accent: #9a6b00;
+  --accent-soft: rgba(154, 107, 0, 0.12);
+  --danger: #b42318;
+}
+
+.dark {
+  --bg: #0b0b0d;
+  --surface: #121215;
+  --surface-2: #1a1a1e;
+  --border: #2a2a30;
+  --text: #f1eee6;
+  --muted: #9a968c;
+  --accent: #d4a017;
+  --accent-soft: rgba(212, 160, 23, 0.14);
+  --danger: #f97066;
+}
+
+@layer base {
+  html {
+    @apply scroll-smooth antialiased;
+  }
+
+  body {
+    @apply bg-bg text-text font-sans transition-colors duration-300;
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--text);
+  }
+
+  button,
+  a {
+    @apply transition-colors duration-200;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .fade-in {
+    animation: fade-in 0.35s ease-out both;
+  }
+
+  .slide-up {
+    animation: slide-up 0.4s ease-out both;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

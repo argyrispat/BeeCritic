@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: beecritic-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: beecritic
+      POSTGRES_PASSWORD: beecritic
+      POSTGRES_DB: beecritic
+    ports:
+      - "5432:5432"
+    volumes:
+      - beecritic_pgdata:/var/lib/postgresql/data
+
+volumes:
+  beecritic_pgdata:
