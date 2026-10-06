@@ -304,10 +304,7 @@ export function MoviePage() {
                   isAuthenticated ? (
                     <button
                       type="button"
-                      onClick={() => {
-                        setWriting(true)
-                        window.scrollTo({ top: 0, behavior: 'smooth' })
-                      }}
+                      onClick={() => setWriting(true)}
                       className="bg-accent px-5 py-2.5 text-sm font-medium text-bg"
                     >
                       Write a Review
