@@ -16,13 +16,35 @@ public class TmdbController : ControllerBase
     }
 
     [HttpGet("search")]
-    public async Task<ActionResult<TmdbPagedResponse>> Search([FromQuery] string q, [FromQuery] int page = 1)
+    public async Task<ActionResult<TmdbPagedResponse>> Search(
+        [FromQuery] string q,
+        [FromQuery] int page = 1,
+        [FromQuery] int? year = null)
     {
         if (string.IsNullOrWhiteSpace(q))
             return BadRequest(new ApiError("Search query is required."));
 
-        return Ok(await _tmdb.SearchMoviesAsync(q.Trim(), page));
+        return Ok(await _tmdb.SearchMoviesAsync(q.Trim(), page, year));
     }
+
+    [HttpGet("discover")]
+    public async Task<ActionResult<TmdbPagedResponse>> Discover(
+        [FromQuery] int page = 1,
+        [FromQuery] string? withGenres = null,
+        [FromQuery] int? year = null,
+        [FromQuery] int? yearFrom = null,
+        [FromQuery] int? yearTo = null,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] double? minRating = null,
+        [FromQuery] int? minVotes = null)
+    {
+        var query = new DiscoverMoviesQuery(page, withGenres, year, yearFrom, yearTo, sortBy, minRating, minVotes);
+        return Ok(await _tmdb.DiscoverMoviesAsync(query));
+    }
+
+    [HttpGet("genres")]
+    public async Task<ActionResult<IReadOnlyList<TmdbGenre>>> Genres()
+        => Ok(await _tmdb.GetGenresAsync());
 
     [HttpGet("movies/{id:int}")]
     public async Task<ActionResult<TmdbMovieDetails>> GetMovie(int id)

@@ -74,6 +74,28 @@
   .slide-up {
     animation: slide-up 0.4s ease-out both;
   }
+
+  .scroll-x {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) var(--surface-2);
+  }
+
+  .scroll-x::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .scroll-x::-webkit-scrollbar-track {
+    background: var(--surface-2);
+  }
+
+  .scroll-x::-webkit-scrollbar-thumb {
+    background: var(--accent);
+  }
+
+  .scroll-x::-webkit-scrollbar-thumb:hover {
+    background: var(--text);
+  }
 }
 
 @keyframes fade-in {

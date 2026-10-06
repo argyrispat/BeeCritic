@@ -2,10 +2,12 @@ import { apiFetch } from '@/lib/api'
 import type {
   AuthResponse,
   Comment,
+  DiscoverFilters,
   MovieStats,
   PagedResult,
   PopularMovie,
   Review,
+  TmdbGenre,
   TmdbMovieDetails,
   TmdbPagedResponse,
   UserProfile,
@@ -30,8 +32,25 @@ export const authApi = {
 }
 
 export const tmdbApi = {
-  search: (q: string, page = 1) =>
-    apiFetch<TmdbPagedResponse>(`/api/tmdb/search?q=${encodeURIComponent(q)}&page=${page}`),
+  search: (q: string, page = 1, year?: number) => {
+    const params = new URLSearchParams({ q, page: String(page) })
+    if (year) params.set('year', String(year))
+    return apiFetch<TmdbPagedResponse>(`/api/tmdb/search?${params}`)
+  },
+  discover: (filters: DiscoverFilters = {}) => {
+    const params = new URLSearchParams()
+    params.set('page', String(filters.page ?? 1))
+    if (filters.withGenres?.length)
+      params.set('withGenres', filters.withGenres.join(','))
+    if (filters.year) params.set('year', String(filters.year))
+    if (filters.yearFrom) params.set('yearFrom', String(filters.yearFrom))
+    if (filters.yearTo) params.set('yearTo', String(filters.yearTo))
+    if (filters.sortBy) params.set('sortBy', filters.sortBy)
+    if (filters.minRating != null) params.set('minRating', String(filters.minRating))
+    if (filters.minVotes != null) params.set('minVotes', String(filters.minVotes))
+    return apiFetch<TmdbPagedResponse>(`/api/tmdb/discover?${params}`)
+  },
+  genres: () => apiFetch<TmdbGenre[]>('/api/tmdb/genres'),
   movie: (id: number) => apiFetch<TmdbMovieDetails>(`/api/tmdb/movies/${id}`),
   trending: (page = 1) => apiFetch<TmdbPagedResponse>(`/api/tmdb/trending?page=${page}`),
   popular: (page = 1) => apiFetch<TmdbPagedResponse>(`/api/tmdb/popular?page=${page}`),

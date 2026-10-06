@@ -70,6 +70,7 @@ export interface TmdbMovieSummary {
   voteCount: number
   genreIds?: number[] | null
   genres?: TmdbGenre[] | null
+  popularity?: number
 }
 
 export interface TmdbCastMember {
@@ -114,6 +115,28 @@ export interface TmdbPagedResponse {
   results: TmdbMovieSummary[]
   totalPages: number
   totalResults: number
+}
+
+export type DiscoverSortBy =
+  | 'popularity.desc'
+  | 'popularity.asc'
+  | 'vote_average.desc'
+  | 'vote_average.asc'
+  | 'primary_release_date.desc'
+  | 'primary_release_date.asc'
+  | 'title.asc'
+  | 'title.desc'
+  | 'revenue.desc'
+
+export interface DiscoverFilters {
+  page?: number
+  withGenres?: number[]
+  year?: number
+  yearFrom?: number
+  yearTo?: number
+  sortBy?: DiscoverSortBy
+  minRating?: number
+  minVotes?: number
 }
 
 export interface ApiErrorBody {

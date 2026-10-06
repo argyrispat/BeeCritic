@@ -10,7 +10,8 @@ public record TmdbMovieSummary(
     double VoteAverage,
     int VoteCount,
     IReadOnlyList<int>? GenreIds,
-    IReadOnlyList<TmdbGenre>? Genres
+    IReadOnlyList<TmdbGenre>? Genres,
+    double Popularity = 0
 );
 
 public record TmdbGenre(int Id, string Name);
@@ -57,4 +58,15 @@ public record TmdbPagedResponse(
     IReadOnlyList<TmdbMovieSummary> Results,
     int TotalPages,
     int TotalResults
+);
+
+public record DiscoverMoviesQuery(
+    int Page = 1,
+    string? WithGenres = null,
+    int? Year = null,
+    int? YearFrom = null,
+    int? YearTo = null,
+    string? SortBy = null,
+    double? MinRating = null,
+    int? MinVotes = null
 );

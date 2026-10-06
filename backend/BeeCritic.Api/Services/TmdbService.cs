@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using BeeCritic.Api.Configuration;
@@ -10,7 +12,9 @@ namespace BeeCritic.Api.Services;
 
 public interface ITmdbService
 {
-    Task<TmdbPagedResponse> SearchMoviesAsync(string query, int page = 1);
+    Task<TmdbPagedResponse> SearchMoviesAsync(string query, int page = 1, int? year = null);
+    Task<TmdbPagedResponse> DiscoverMoviesAsync(DiscoverMoviesQuery query);
+    Task<IReadOnlyList<TmdbGenre>> GetGenresAsync();
     Task<TmdbMovieDetails?> GetMovieDetailsAsync(int movieId);
     Task<TmdbPagedResponse> GetTrendingAsync(int page = 1);
     Task<TmdbPagedResponse> GetPopularAsync(int page = 1);
@@ -40,9 +44,89 @@ public class TmdbService : ITmdbService
         _logger = logger;
     }
 
-    public Task<TmdbPagedResponse> SearchMoviesAsync(string query, int page = 1)
-        => GetPagedAsync($"search/movie?query={Uri.EscapeDataString(query)}&page={page}&include_adult=false",
-            cacheKey: null, cacheMinutes: 0);
+    public Task<TmdbPagedResponse> SearchMoviesAsync(string query, int page = 1, int? year = null)
+    {
+        var path = new StringBuilder($"search/movie?query={Uri.EscapeDataString(query)}&page={page}&include_adult=false");
+        if (year is int y)
+            path.Append($"&primary_release_year={y}");
+        return GetPagedAsync(path.ToString(), cacheKey: null, cacheMinutes: 0);
+    }
+
+    public Task<TmdbPagedResponse> DiscoverMoviesAsync(DiscoverMoviesQuery query)
+    {
+        var page = Math.Clamp(query.Page, 1, 500);
+        var parts = new List<string>
+        {
+            $"page={page}",
+            "include_adult=false",
+            "language=en-US"
+        };
+
+        if (!string.IsNullOrWhiteSpace(query.WithGenres))
+            parts.Add($"with_genres={Uri.EscapeDataString(query.WithGenres.Trim())}");
+
+        if (query.Year is int year)
+            parts.Add($"primary_release_year={year}");
+        else
+        {
+            if (query.YearFrom is int yearFrom)
+                parts.Add($"primary_release_date.gte={yearFrom:D4}-01-01");
+            if (query.YearTo is int yearTo)
+                parts.Add($"primary_release_date.lte={yearTo:D4}-12-31");
+        }
+
+        var sortBy = SanitizeSortBy(query.SortBy);
+        parts.Add($"sort_by={Uri.EscapeDataString(sortBy)}");
+
+        if (query.MinRating is double minRating and >= 0)
+            parts.Add($"vote_average.gte={minRating.ToString(CultureInfo.InvariantCulture)}");
+
+        if (query.MinVotes is int minVotes and > 0)
+            parts.Add($"vote_count.gte={minVotes}");
+        else if (query.MinRating is > 0)
+            parts.Add("vote_count.gte=50");
+
+        var path = $"discover/movie?{string.Join("&", parts)}";
+        var cacheKey = $"tmdb:discover:{string.Join("|", parts)}";
+        return GetPagedAsync(path, cacheKey, 15);
+    }
+
+    public async Task<IReadOnlyList<TmdbGenre>> GetGenresAsync()
+    {
+        const string cacheKey = "tmdb:genres";
+        if (_cache.TryGetValue(cacheKey, out IReadOnlyList<TmdbGenre>? cached) && cached is not null)
+            return cached;
+
+        var raw = await GetAsync<TmdbGenreListRaw>("genre/movie/list?language=en-US")
+            ?? throw new AppException("Failed to fetch genres from TMDB.", StatusCodes.Status502BadGateway);
+
+        var genres = raw.Genres
+            .Select(g => new TmdbGenre(g.Id, g.Name ?? ""))
+            .Where(g => !string.IsNullOrWhiteSpace(g.Name))
+            .OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        _cache.Set(cacheKey, (IReadOnlyList<TmdbGenre>)genres, TimeSpan.FromHours(24));
+        return genres;
+    }
+
+    private static readonly HashSet<string> AllowedSortBy = new(StringComparer.Ordinal)
+    {
+        "popularity.desc",
+        "popularity.asc",
+        "vote_average.desc",
+        "vote_average.asc",
+        "primary_release_date.desc",
+        "primary_release_date.asc",
+        "title.asc",
+        "title.desc",
+        "revenue.desc"
+    };
+
+    private static string SanitizeSortBy(string? sortBy)
+        => !string.IsNullOrWhiteSpace(sortBy) && AllowedSortBy.Contains(sortBy)
+            ? sortBy
+            : "popularity.desc";
 
     public async Task<TmdbMovieDetails?> GetMovieDetailsAsync(int movieId)
     {
@@ -180,7 +264,8 @@ public class TmdbService : ITmdbService
         m.VoteAverage,
         m.VoteCount,
         m.GenreIds,
-        m.Genres?.Select(g => new TmdbGenre(g.Id, g.Name ?? "")).ToList()
+        m.Genres?.Select(g => new TmdbGenre(g.Id, g.Name ?? "")).ToList(),
+        m.Popularity
     );
 
     private static TmdbMovieDetails MapDetails(TmdbMovieDetailsRaw m) => new(
@@ -221,6 +306,7 @@ public class TmdbService : ITmdbService
         [JsonPropertyName("release_date")] public string? ReleaseDate { get; set; }
         [JsonPropertyName("vote_average")] public double VoteAverage { get; set; }
         [JsonPropertyName("vote_count")] public int VoteCount { get; set; }
+        public double Popularity { get; set; }
         [JsonPropertyName("genre_ids")] public List<int>? GenreIds { get; set; }
         public List<TmdbGenreRaw>? Genres { get; set; }
     }
@@ -231,6 +317,11 @@ public class TmdbService : ITmdbService
         public string? Tagline { get; set; }
         public string? Status { get; set; }
         public TmdbCreditsRaw? Credits { get; set; }
+    }
+
+    private sealed class TmdbGenreListRaw
+    {
+        public List<TmdbGenreRaw> Genres { get; set; } = [];
     }
 
     private sealed class TmdbGenreRaw
