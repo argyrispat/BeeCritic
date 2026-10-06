@@ -32,9 +32,9 @@ public class ExceptionMiddleware
         {
             await WriteError(context, ex.StatusCode, ex.Message);
         }
-        catch (UnauthorizedAccessException ex)
+        catch (UnauthorizedAccessException)
         {
-            await WriteError(context, StatusCodes.Status401Unauthorized, ex.Message);
+            await WriteError(context, StatusCodes.Status401Unauthorized, "Unauthorized.");
         }
         catch (Exception ex)
         {

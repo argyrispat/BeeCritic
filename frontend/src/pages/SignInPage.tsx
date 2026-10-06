@@ -32,7 +32,8 @@ export function SignInPage() {
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-16">
       <h1 className="font-display text-4xl">Sign in</h1>
       <p className="mt-2 text-sm text-muted">
-        Demo account: <span className="text-text">demo@beecritic.com</span> /{' '}
+        Demo environment — publicly shared credentials for evaluation only:{' '}
+        <span className="text-text">demo@beecritic.com</span> /{' '}
         <span className="text-text">Demo1234!</span>
       </p>
 

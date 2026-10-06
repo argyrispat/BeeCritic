@@ -44,7 +44,18 @@ export function SignUpPage() {
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-16">
       <h1 className="font-display text-4xl">Create account</h1>
-      <p className="mt-2 text-sm text-muted">Join BeeCritic and start reviewing films.</p>
+      <p className="mt-2 text-sm text-muted">
+        Join BeeCritic and start reviewing films. By creating an account you acknowledge this is a
+        demo project — see the{' '}
+        <Link to="/privacy" className="text-accent hover:underline">
+          Privacy Policy
+        </Link>{' '}
+        and{' '}
+        <Link to="/terms" className="text-accent hover:underline">
+          Terms
+        </Link>
+        .
+      </p>
 
       <form
         className="mt-8 space-y-5"

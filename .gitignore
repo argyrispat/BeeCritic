@@ -6,6 +6,8 @@ dist/
 *.user
 *.suo
 .vs/
+backend/_build_check/
+backend/_compile_check/
 
 # Environment / secrets
 .env

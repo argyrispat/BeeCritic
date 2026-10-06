@@ -118,11 +118,18 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    // Only meaningful when the API is served over HTTPS (e.g. production reverse proxy terminates TLS).
+    app.UseHsts();
+    app.UseHttpsRedirection();
 }
 
 app.UseCors("Frontend");

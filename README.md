@@ -94,3 +94,38 @@ Swagger UI: `http://localhost:5080/swagger`
 - Passwords hashed with BCrypt
 - Login returns a JWT used as `Authorization: Bearer <token>`
 - Ownership checks on review/comment mutations are enforced server-side
+
+## Privacy & Security
+
+BeeCritic is a **portfolio/demo application**. It is not intended for production use or for processing real customer data. Seeded users, reviews, and comments are fictional.
+
+### What is implemented
+
+- **Authentication:** passwords are hashed with BCrypt (never stored in plaintext); login/register return JWTs validated server-side
+- **Authorization:** review and comment create/update/delete require a valid JWT; ownership is enforced in services (user id comes from the token, not the request body)
+- **No roles / no tenants:** there is no role field to escalate; the app is a single shared demo space with per-user ownership of content
+- **Data minimization:** accounts store username, email, password hash, and timestamps only — no government ID, DOB, gender, health data, or precise GPS
+- **Errors:** API responses use user-friendly messages; stack traces and internal details are not returned in production
+- **Logging:** passwords and JWT tokens are not intentionally logged
+- **Legal pages (demo templates):** `/privacy`, `/cookies`, `/terms`, `/cookie-settings`
+- **Cookie notice:** the app uses necessary `localStorage` for auth/theme/consent; analytics and advertising cookies are **not** used
+
+Legal pages are demonstration templates and have **not** been reviewed by a lawyer.
+
+> Before using this software commercially, the privacy policy, terms, cookie implementation, data retention practices, security configuration, and GDPR obligations should be reviewed and adapted by qualified legal/privacy professionals.
+
+### Security headers
+
+| Header | Where | Notes |
+|--------|--------|--------|
+| `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` | API + Vite | Always applied |
+| `Content-Security-Policy` | API + Vite | Dev Vite CSP allows HMR + Google Fonts + TMDB images; production API uses a tight policy for JSON |
+| `Strict-Transport-Security` / HTTPS redirection | API | Enabled outside Development; HSTS header is added only when the request is HTTPS |
+
+When hosting the SPA in production, configure the same (or stricter) headers on your static host or reverse proxy. Local development uses HTTP, so HSTS does not apply until TLS is terminated in front of the API.
+
+### Secrets
+
+- Never commit `.env` files, real API keys, or production JWT signing keys
+- Committed `appsettings.json` values (JWT key, local Postgres password) are **development defaults only** — override them for any shared or public deployment
+- Provide `Tmdb:ApiKey` via environment variables or user secrets
