@@ -33,5 +33,3 @@ coverage/
 
 # EF
 **/Migrations/*.Designer.cs.bak
-backend/BeeCritic.Api/appsettings.Development.json
-backend/BeeCritic.Api/appsettings.Development.json
